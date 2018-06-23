@@ -51,6 +51,34 @@ func git(args ...string) {
 	cmd.Run()
 }
 
+func getLastHASH() string {
+	cmd := exec.Command("git", "rev-list", "--tags", "--max-count=1")
+	bs, err := cmd.Output()
+	if err != nil {
+		return "error"
+	}
+	return string(bytes.TrimSpace(bs))
+}
+
+func getCurrentHASH() string {
+	//git rev-parse HEAD
+	cmd := exec.Command("git", "rev-parse", "HEAD")
+	bs, err := cmd.Output()
+	if err != nil {
+		return "error"
+	}
+	return string(bytes.TrimSpace(bs))
+}
+
+func getCurrenTAG() string {
+	cmd := exec.Command("git", "describe", "--tags", getLastHASH())
+	bs, err := cmd.Output()
+	if err != nil {
+		return "error"
+	}
+	return string(bytes.TrimSpace(bs))
+}
+
 func getGitConfig(args ...string) string {
 	args = append([]string{"config", "--get"}, args...)
 	cmd := exec.Command("git", args...)
