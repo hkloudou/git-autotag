@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"regexp"
@@ -25,13 +26,17 @@ func main() {
 
 	sign := getGitConfigBool("autotag.sign")
 
-	curVer := closestVersion()
-	if curVer == "" {
+	closeVer := closestVersion()
+	log.Println("closeVer:", closeVer, "currentTag", getCurrenTAG())
+	if closeVer == "" {
 		fmt.Println("unknown current version")
+		os.Exit(1)
+	} else if closeVer == getCurrenTAG() {
+		fmt.Println("no code change,need't tag")
 		os.Exit(1)
 	}
 
-	newVer := bumpVersion(curVer, levels[*level])
+	newVer := bumpVersion(closeVer, levels[*level])
 	args := []string{"tag", "-a", "-m", newVer}
 
 	if sign {
@@ -61,7 +66,6 @@ func getLastHASH() string {
 }
 
 func getCurrentHASH() string {
-	//git rev-parse HEAD
 	cmd := exec.Command("git", "rev-parse", "HEAD")
 	bs, err := cmd.Output()
 	if err != nil {
@@ -71,7 +75,7 @@ func getCurrentHASH() string {
 }
 
 func getCurrenTAG() string {
-	cmd := exec.Command("git", "describe", "--tags", getLastHASH())
+	cmd := exec.Command("git", "describe", "--tags", getCurrentHASH())
 	bs, err := cmd.Output()
 	if err != nil {
 		return "error"
