@@ -29,9 +29,9 @@ func main() {
 	closeVer := closestVersion()
 	log.Println("closeVer:", closeVer, "currentTag", getCurrenTAG())
 	if closeVer == "" {
-		fmt.Println("unknown current version")
-		os.Exit(1)
-	} else if closeVer == getCurrenTAG() {
+		closeVer = "v1.0.0"
+	}
+	if closeVer == getCurrenTAG() {
 		fmt.Println("no code change,need't tag")
 		os.Exit(1)
 	}
