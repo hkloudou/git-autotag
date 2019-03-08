@@ -24,15 +24,21 @@ var levels = map[string]int{
 func main() {
 	level := flag.String("l", "patch", `Version part to increase - "major", "minor" or "patch"`)
 	push := flag.Bool("push", false, `Push after tag`)
-	commit := flag.String("commit", "auto tag", `git . and commit`)
+	commit := flag.String("commit", "", `git . and commit`)
 	flag.Parse()
 	sign := getGitConfigBool("autotag.sign")
+
+	if *commit != "" {
+		git("add", ".")
+		git("commit", "-S", "-m", *commit)
+	}
 
 	closeVer := closestVersion()
 	log.Println("close ver:", closeVer, "currentTag", getCurrenTAG())
 	if closeVer == "" {
 		closeVer = "v1.0.0"
 	}
+
 	if closeVer == getCurrenTAG() {
 		fmt.Println("no code change,need't tag")
 		os.Exit(1)
@@ -47,16 +53,11 @@ func main() {
 	args = append(args, newVer)
 	//git add . && git commit -S -m 'auto tag'
 	fmt.Println("new ver:", newVer)
-	if *commit != "" {
-		if git("add", ".") != nil {
-			git("commit", "-S", "-m", *commit)
-		}
-	}
 
-	git(args...)
-	if *push {
+	if git(args...) == nil && *push {
 		git("push", "origin", getCurrentBranch(), "-f", "--tags")
 	}
+
 }
 
 func git(args ...string) error {
@@ -126,11 +127,11 @@ func closestVersion() string {
 	if err != nil {
 		return ""
 	}
+	return string(bytes.TrimSpace(bs))
 	arr := strings.Split(string(bytes.TrimSpace(bs)), "\n")
 	tag := ""
 
 	for _, item := range arr {
-		log.Println("close:", item)
 		if strings.HasPrefix(item, "v") {
 			tag = item
 		}
