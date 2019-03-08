@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 var levels = map[string]int{
@@ -22,8 +23,8 @@ var levels = map[string]int{
 
 func main() {
 	level := flag.String("l", "patch", `Version part to increase - "major", "minor" or "patch"`)
+	push := flag.Bool("push", false, `Push after tag`)
 	flag.Parse()
-
 	sign := getGitConfigBool("autotag.sign")
 
 	closeVer := closestVersion()
@@ -46,6 +47,9 @@ func main() {
 
 	fmt.Println(newVer)
 	git(args...)
+	if *push {
+		git("push", "origin", getCurrentBranch(), "-f", "--tags")
+	}
 }
 
 func git(args ...string) {
@@ -69,7 +73,16 @@ func getCurrentHASH() string {
 	cmd := exec.Command("git", "rev-parse", "HEAD")
 	bs, err := cmd.Output()
 	if err != nil {
-		return "error"
+		panic(err)
+	}
+	return string(bytes.TrimSpace(bs))
+}
+
+func getCurrentBranch() string {
+	cmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
+	bs, err := cmd.Output()
+	if err != nil {
+		panic(err)
 	}
 	return string(bytes.TrimSpace(bs))
 }
@@ -100,11 +113,23 @@ func getGitConfigBool(args ...string) bool {
 
 func closestVersion() string {
 	cmd := exec.Command("git", "describe", "--abbrev=0")
+	//cmd := exec.Command("git", "tag", "-l")
+	//git tag -l
 	bs, err := cmd.Output()
 	if err != nil {
 		return ""
 	}
-	return string(bytes.TrimSpace(bs))
+	arr := strings.Split(string(bytes.TrimSpace(bs)), "\n")
+	tag := ""
+
+	for _, item := range arr {
+		log.Println("close:", item)
+		if strings.HasPrefix(item, "v") {
+			tag = item
+		}
+	}
+	return tag
+	//return string(bytes.TrimSpace(bs))
 }
 
 func bumpVersion(ver string, part int) string {
