@@ -24,38 +24,43 @@ var levels = map[string]int{
 func main() {
 	level := flag.String("l", "patch", `Version part to increase - "major", "minor" or "patch"`)
 	push := flag.Bool("push", false, `Push after tag`)
+	tag := flag.Bool("tag", true, `tag`)
 	commit := flag.String("commit", "", `git . and commit`)
 	flag.Parse()
 	sign := getGitConfigBool("autotag.sign")
 
+	//允许commit就commit
 	if *commit != "" {
 		git("add", ".")
 		git("commit", "-S", "-m", *commit)
 	}
 
-	closeVer := closestVersion()
-	log.Println("close ver:", closeVer, "currentTag", getCurrenTAG())
-	if closeVer == "" {
-		closeVer = "v1.0.0"
-	}
+	//允许tag就tag 默认开启
+	if *tag {
+		closeVer := closestVersion()
+		log.Println("close ver:", closeVer, "currentTag", getCurrenTAG())
+		if closeVer == "" {
+			closeVer = "v1.0.0"
+		}
 
-	if closeVer == getCurrenTAG() {
-		fmt.Println("no code change,need't tag")
-		os.Exit(1)
-	}
+		if closeVer == getCurrenTAG() {
+			fmt.Println("no code change,need't tag")
+			os.Exit(1)
+		}
 
-	newVer := bumpVersion(closeVer, levels[*level])
-	args := []string{"tag", "-a", "-m", newVer}
+		newVer := bumpVersion(closeVer, levels[*level])
+		args := []string{"tag", "-a", "-m", newVer}
 
-	if sign {
-		args = append(args, "-s")
-	}
-	args = append(args, newVer)
-	//git add . && git commit -S -m 'auto tag'
-	fmt.Println("new ver:", newVer)
+		if sign {
+			args = append(args, "-s")
+		}
+		args = append(args, newVer)
+		//git add . && git commit -S -m 'auto tag'
+		fmt.Println("new ver:", newVer)
 
-	if git(args...) == nil && *push {
-		git("push", "origin", getCurrentBranch(), "-f", "--tags")
+		if git(args...) == nil && *push {
+			git("push", "origin", getCurrentBranch(), "-f", "--tags")
+		}
 	}
 
 }
