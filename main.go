@@ -24,11 +24,12 @@ var levels = map[string]int{
 func main() {
 	level := flag.String("l", "patch", `Version part to increase - "major", "minor" or "patch"`)
 	push := flag.Bool("push", false, `Push after tag`)
+	commit := flag.String("commit", "auto tag", `git . and commit`)
 	flag.Parse()
 	sign := getGitConfigBool("autotag.sign")
 
 	closeVer := closestVersion()
-	log.Println("closeVer:", closeVer, "currentTag", getCurrenTAG())
+	log.Println("close ver:", closeVer, "currentTag", getCurrenTAG())
 	if closeVer == "" {
 		closeVer = "v1.0.0"
 	}
@@ -44,20 +45,26 @@ func main() {
 		args = append(args, "-s")
 	}
 	args = append(args, newVer)
+	//git add . && git commit -S -m 'auto tag'
+	fmt.Println("new ver:", newVer)
+	if *commit != "" {
+		if git("add", ".") != nil {
+			git("commit", "-S", "-m", *commit)
+		}
+	}
 
-	fmt.Println(newVer)
 	git(args...)
 	if *push {
 		git("push", "origin", getCurrentBranch(), "-f", "--tags")
 	}
 }
 
-func git(args ...string) {
+func git(args ...string) error {
 	cmd := exec.Command("git", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
-	cmd.Run()
+	return cmd.Run()
 }
 
 func getLastHASH() string {
@@ -73,7 +80,7 @@ func getCurrentHASH() string {
 	cmd := exec.Command("git", "rev-parse", "HEAD")
 	bs, err := cmd.Output()
 	if err != nil {
-		panic(err)
+		return "error"
 	}
 	return string(bytes.TrimSpace(bs))
 }
