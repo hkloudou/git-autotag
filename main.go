@@ -24,9 +24,10 @@ var levels = map[string]int{
 func main() {
 
 	level := flag.String("l", "patch", `Version part to increase - "major", "minor" or "patch"`)
-	push := flag.Bool("P", false, `Push after tag`)
-	tag := flag.Bool("T", false, `tag`)
-	increase := flag.Bool("I", false, `increase`)
+	push := flag.Bool("p", false, `Push after tag`)
+	tag := flag.Bool("t", false, `tag`)
+	increase := flag.Bool("i", false, `increase`)
+	force := flag.Bool("f", false, `increase`)
 	commit := flag.String("commit", "", `git . and commit`)
 	newVer := ""
 	flag.Parse()
@@ -41,7 +42,7 @@ func main() {
 		return
 	}
 
-	fmt.Println(os.Args, "*tag", *tag, "increase", *increase, "push", *push, "level", *level)
+	fmt.Println(os.Args, "*tag", *tag, "increase", *increase, "push", *push, "force", *force, "level", *level)
 	sign := getGitConfigBool("autotag.sign")
 
 	//允许commit就commit
@@ -63,6 +64,9 @@ func main() {
 			newVer = closeVer
 		}
 		args := []string{"tag", "-a", "-m", newVer}
+		if *force {
+			args = append(args, "-f")
+		}
 
 		if sign {
 			args = append(args, "-s")
