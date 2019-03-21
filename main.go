@@ -25,7 +25,9 @@ func main() {
 	level := flag.String("l", "patch", `Version part to increase - "major", "minor" or "patch"`)
 	push := flag.Bool("push", false, `Push after tag`)
 	tag := flag.Bool("tag", true, `tag`)
+	increase := flag.Bool("add", true, `increase`)
 	commit := flag.String("commit", "", `git . and commit`)
+	newVer := ""
 	flag.Parse()
 	sign := getGitConfigBool("autotag.sign")
 
@@ -38,17 +40,19 @@ func main() {
 	//允许tag就tag 默认开启
 	if *tag {
 		closeVer := closestVersion()
-		log.Println("close ver:", closeVer, "currentTag", getCurrenTAG())
 		if closeVer == "" {
 			closeVer = "v1.0.0"
 		}
-
-		if closeVer == getCurrenTAG() {
-			fmt.Println("no code change,need't tag")
-			os.Exit(1)
+		log.Println("close ver:", closeVer, "currentTag", getCurrenTAG())
+		if *increase {
+			if closeVer == getCurrenTAG() {
+				fmt.Println("no code change,need't tag")
+				os.Exit(1)
+			}
+			newVer = bumpVersion(closeVer, levels[*level])
+		} else {
+			newVer = closeVer
 		}
-
-		newVer := bumpVersion(closeVer, levels[*level])
 		args := []string{"tag", "-a", "-m", newVer}
 
 		if sign {
