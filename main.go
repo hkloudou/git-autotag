@@ -24,13 +24,13 @@ var levels = map[string]int{
 func main() {
 
 	level := flag.String("l", "patch", `Version part to increase - "major", "minor" or "patch"`)
-	push := flag.Bool("push", false, `Push after tag`)
-	tag := flag.Bool("tag", true, `tag`)
-	increase := flag.Bool("add", true, `increase`)
+	push := flag.Bool("P", false, `Push after tag`)
+	tag := flag.Bool("T", false, `tag`)
+	increase := flag.Bool("I", false, `increase`)
 	commit := flag.String("commit", "", `git . and commit`)
 	newVer := ""
 	flag.Parse()
-	fmt.Println(os.Args)
+	fmt.Println(os.Args, "*tag", *tag, "increase", *increase, "level", *level)
 	sign := getGitConfigBool("autotag.sign")
 
 	//允许commit就commit
@@ -66,8 +66,9 @@ func main() {
 		if git(args...) == nil && *push {
 			git("push", "origin", getCurrentBranch(), "-f", "--tags")
 		}
+	} else if *push {
+		git("push", "origin", getCurrentBranch(), "-f", "--tags")
 	}
-
 }
 
 func git(args ...string) error {
