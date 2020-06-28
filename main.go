@@ -49,10 +49,13 @@ func main() {
 	log.Println("*commit", *commit)
 	if *commit != "" {
 		if err := git("add", "."); err != nil {
-			panic(err)
+			log.Println("err1", err)
+			// panic(err)
 		}
-		if err := git("commit", "-S", "-m", *commit); err != nil {
-			panic(err)
+		// if err := git("commit", "-S", "-m", *commit); err != nil {
+		if err := git("commit", "-m", *commit); err != nil {
+			log.Println("err2", err)
+			// panic(err)
 		}
 	}
 
