@@ -46,9 +46,14 @@ func main() {
 	sign := getGitConfigBool("autotag.sign")
 
 	//允许commit就commit
+	log.Println("*commit", *commit)
 	if *commit != "" {
-		git("add", ".")
-		git("commit", "-S", "-m", *commit)
+		if err := git("add", "."); err != nil {
+			panic(err)
+		}
+		if err := git("commit", "-S", "-m", *commit); err != nil {
+			panic(err)
+		}
 	}
 
 	//允许tag就tag 默认开启
